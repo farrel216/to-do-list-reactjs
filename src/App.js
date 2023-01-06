@@ -1,23 +1,28 @@
-import logo from './logo.svg';
-import './App.css';
-
+import { useState } from 'react';
+import FormAdd from './components/Form';
+import Title from './components/Title'
+import Section from './components/Section';
+import './style.css'
 function App() {
+  const [input,setInput] = useState("");
+  const [todos,setTodos] = useState([]);
+  
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div className='container py-5 d-flex flex-column'>
+      <div>
+
+      <Title/>
+      </div>
+    <div>
+      <FormAdd 
+      input={input}
+      setInput={setInput}
+      todos={todos}
+      setTodos={setTodos}
+      className='input-group mb-3'  
+      />
+    </div>
+      <Section className="todos" todos={todos} setTodos={setTodos}/>
     </div>
   );
 }
