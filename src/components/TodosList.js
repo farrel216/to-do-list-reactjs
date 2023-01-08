@@ -10,7 +10,13 @@ const TodosList = () => {
     getTodos();
   }, []);
   useEffect(() => {
-    switchTab();
+    if (tab === "all") {
+      getTodos();
+    } else if (tab === "active") {
+      getTodosActive();
+    } else if (tab === "completed") {
+      getTodosCompleted();
+    }
   }, [tab]);
 
   const switchTab = () => {
