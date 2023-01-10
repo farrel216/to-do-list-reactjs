@@ -1,23 +1,49 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { FaCheck, FaTrash } from "react-icons/fa";
+import jwtDecode from "jwt-decode";
+import { useNavigate } from "react-router";
 
 const TodosList = () => {
   const [todos, setTodos] = useState([]);
   const [input, setInput] = useState("");
-  const [tab, setTab] = useState("all");
-  useEffect(() => {
-    getTodos();
-  }, []);
-  useEffect(() => {
-    if (tab === "all") {
-      getTodos();
-    } else if (tab === "active") {
-      getTodosActive();
-    } else if (tab === "completed") {
-      getTodosCompleted();
+  const [tab, setTab] = useState("");
+  const [token, setToken] = useState('');
+  const [expire,setExpire] = useState();
+
+  
+
+  const navigate = useNavigate();
+  
+  
+  // axios withcredentials
+  axios.defaults.withCredentials = true
+  const configJWT = () => {
+    return {
+      headers: {
+        "x-access-token": token
+      }
     }
-  }, [tab]);
+  }
+  const axiosJWT = axios.create()
+  axiosJWT.interceptors.request.use(async(config) => {
+    let currentDate = new Date()
+    if(expire*1000<currentDate.getTime()){
+      console.log(currentDate)
+      console.log((expire * 1000) - currentDate.getTime())
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/auth/token`)
+      config.headers['x-access-token'] = response.data.accessToken
+      config.withCredentials = true
+      setToken(response.data.accessToken)
+      const decoded = jwtDecode(response.data.accessToken)
+      setExpire(decoded.exp)
+      console.log("token refreshed")
+    }
+    return config
+  },(error) => {
+    return Promise.reject(error);
+  })
+  
 
   const switchTab = () => {
     if (tab === "all") {
@@ -29,35 +55,51 @@ const TodosList = () => {
     }
   };
   const deleteAllComplete = async () => {
-    const response = await axios.delete(
-      `${process.env.REACT_APP_API_URL}/todos`
-    );
+    const response = await axiosJWT.delete(
+      `${process.env.REACT_APP_API_URL}/api/todos`
+    ,configJWT());
     if (response.status === 200) {
       getTodos();
     } else {
       console.log("Error");
     }
   };
-  const getTodos = async () => {
-    const response = await axios.get(`${process.env.REACT_APP_API_URL}`);
-    setTodos(response.data);
-  };
+  
 
+  const refreshToken = async () => {
+    try {
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/auth/token`)
+      setToken(response.data.accessToken)
+      const decoded = jwtDecode(response.data.accessToken)
+      setExpire(decoded.exp)
+    } catch (error) {
+      console.log(error)
+    }
+  }
+  const getTodos = async () => {
+    try {
+      const response = await axiosJWT.get(`${process.env.REACT_APP_API_URL}/api`,configJWT());
+      setTodos(response.data);
+    } catch (error) {
+      throw error
+    }
+  };
   const getTodosActive = async () => {
-    const response = await axios.get(`${process.env.REACT_APP_API_URL}/active`);
+    const response = await axiosJWT.get(`${process.env.REACT_APP_API_URL}/api/active`,configJWT());
     setTodos(response.data);
   };
   const getTodosCompleted = async () => {
-    const response = await axios.get(
-      `${process.env.REACT_APP_API_URL}/completed`
+    const response = await axiosJWT.get(
+      `${process.env.REACT_APP_API_URL}/api/completed`
+    ,configJWT()
     );
     setTodos(response.data);
   };
 
   const deleteTodo = async (id) => {
-    const response = await axios.delete(
-      `${process.env.REACT_APP_API_URL}/${id}`
-    );
+    const response = await axiosJWT.delete(
+      `${process.env.REACT_APP_API_URL}/api/${id}`
+    ,configJWT());
     if (response.status === 200) {
       switchTab();
     } else {
@@ -73,10 +115,11 @@ const TodosList = () => {
       alert("Please enter a todo");
       return;
     }
-    const response = await axios.post(`${process.env.REACT_APP_API_URL}/add`, {
+    const response = await axiosJWT.post(`${process.env.REACT_APP_API_URL}/api/add`, {
+
       activity: input,
-      completed: false,
-    });
+      completed: false
+    },configJWT());
     if (response.status === 200) {
       switchTab();
       setInput("");
@@ -90,20 +133,44 @@ const TodosList = () => {
     }
   };
   const completeTodo = async (id, completed) => {
-    const response = await axios.put(`${process.env.REACT_APP_API_URL}/${id}`, {
+    const response = await axiosJWT.put(`${process.env.REACT_APP_API_URL}/api/${id}`, {
       completed: !completed,
-    });
+    },configJWT());
     if (response.status === 200) {
       switchTab();
     } else {
       console.log("Error");
     }
   };
+  const logoutHandler = async() =>{
+    try {
+      await axiosJWT.delete(`${process.env.REACT_APP_API_URL}/auth/logout`,configJWT())
+      navigate('/')
+    } catch (error) {
+      console.log(error)
+    }
+
+  }
+
+  
+
+  useEffect(() => {
+    const refresh = async()=>{
+      await refreshToken()
+      setTab('all')
+    }
+    refresh()
+  }, []);
+
+  useEffect(()=>{
+    switchTab()
+  }, [tab]);
   return (
     <div>
       <h1 id="title" className="fs-1 fw-bold text-center mb-3">
         To Do List App
       </h1>
+      <button onClick={()=>{logoutHandler()}}>Logout</button>
       <div className="input-group">
         <input
           type="text"
@@ -122,6 +189,7 @@ const TodosList = () => {
           Add Todo
         </button>
       </div>
+
       <div className="todos mt-5">
         <div className="title d-flex justify-content-between mb-3">
           <h2>To Do List</h2>
@@ -161,9 +229,8 @@ const TodosList = () => {
         {todos.map((todo) => {
           return (
             <li
-              className={`${
-                todo.completed ? "bg-success" : "bg-light"
-              } list-group-item d-flex justify-content-between row align-items-center mb-2`}
+              className={`${todo.completed ? "bg-success" : "bg-light"
+                } list-group-item d-flex justify-content-between row align-items-center mb-2`}
               key={todo._id}
             >
               <div className="ms-3 todo d-inline-block col-3">
@@ -175,9 +242,8 @@ const TodosList = () => {
                 </label>
               </div>
               <label
-                className={`badge rounded-pill text-light fw-semibold col-3 ${
-                  todo.completed ? "bg-primary" : "bg-warning"
-                }`}
+                className={`badge rounded-pill text-light fw-semibold col-3 ${todo.completed ? "bg-primary" : "bg-warning"
+                  }`}
               >
                 {todo.completed ? "Completed" : "Not Completed"}
               </label>
