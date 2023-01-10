@@ -16,7 +16,7 @@ function App() {
   const navigate = useNavigate()
   
   useEffect(()=>{
-    (async()=>{
+    const verify = async ()=>{
       setIsLoading(true)
       if(!auth.token){
         const token = await auth.getToken()
@@ -31,7 +31,8 @@ function App() {
         }
       }
       setIsLoading(false)
-    })()
+    }
+    verify()
     //eslint-disable-next-line react-hooks/exhaustive-deps
   },[auth.isLogin])
 
