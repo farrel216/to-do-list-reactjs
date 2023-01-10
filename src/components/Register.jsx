@@ -40,17 +40,17 @@ const Register = () => {
                 <h3 className="fw-normal mb-3 pb-3">Log in</h3>
                 <p>{error}</p>
                 <div className="form-outline mb-4">
-                  <input type="text" id="form2Example18" value={username} onChange={(e) => { setUsername(e.target.value) }} placeholder="Username" className="form-control form-control-lg" />
-                  <label className="form-label" htmlFor="form2Example18">Username</label>
+                  <input type="text" id="username" value={username} onChange={(e) => { setUsername(e.target.value) }} placeholder="Username" className="form-control form-control-lg" />
+                  <label className="form-label" htmlFor="username">Username</label>
                 </div>
 
                 <div className="form-outline mb-4">
-                  <input type="password" id="form2Example28" value={password} onChange={(e) => { setPassword(e.target.value) }} placeholder="*******" className="form-control form-control-lg" />
-                  <label className="form-label" htmlFor="form2Example28">Password</label>
+                  <input type="password" id="password" value={password} onChange={(e) => { setPassword(e.target.value) }} placeholder="*******" className="form-control form-control-lg" />
+                  <label className="form-label" htmlFor="password">Password</label>
                 </div>
                 <div className="form-outline mb-4">
-                  <input type="password" id="form2Example28" value={confPassword} onChange={(e) => { setConfPassword(e.target.value) }} placeholder="*******" className="form-control form-control-lg" />
-                  <label className="form-label" htmlFor="form2Example28">Confirm Password</label>
+                  <input type="password" id="confirmPass" value={confPassword} onChange={(e) => { setConfPassword(e.target.value) }} placeholder="*******" className="form-control form-control-lg" />
+                  <label className="form-label" htmlFor="confirmPass">Confirm Password</label>
                 </div>
 
                 <div className="pt-1 mb-4">
