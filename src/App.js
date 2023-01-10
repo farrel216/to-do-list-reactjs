@@ -16,11 +16,10 @@ function App() {
   const navigate = useNavigate()
   
   useEffect(()=>{
-    const verify = async ()=>{
+    const verify = ()=>{
       setIsLoading(true)
       if(!auth.token){
-        const token = await auth.getToken()
-        console.log("terpanggil")
+        const token = auth.getToken()
         if(token){
           navigate('/')  
         }
@@ -33,7 +32,7 @@ function App() {
       setIsLoading(false)
     }
     verify()
-    //eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   },[auth.isLogin])
 
   return (
