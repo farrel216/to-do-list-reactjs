@@ -164,6 +164,7 @@ const TodosList = () => {
 
   useEffect(()=>{
     switchTab()
+    //eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab]);
   return (
     <div>
