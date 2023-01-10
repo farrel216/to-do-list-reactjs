@@ -1,22 +1,27 @@
 import axios from "axios";
 import { useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 const Login = () => {
+  const navigate = useNavigate()
+  const auth = useAuth()
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState(null)
-  const navigate = useNavigate()
   const onSubmitChange = async (e) => {
     e.preventDefault()
     try {
-      await axios.post(`${process.env.REACT_APP_API_URL}/auth/login`, {
-        username: username,
-        password: password
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/auth/login`, {
+        username:username,
+        password:password
       },{
         withCredentials: true
       })
-      navigate("/home")
+      if(response){
+        await auth.getToken()
+        navigate('/home')
+      }
     } catch (error) {
       return setError(error.response.data.message)
     }

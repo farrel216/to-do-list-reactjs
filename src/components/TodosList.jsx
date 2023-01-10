@@ -1,17 +1,15 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { FaCheck, FaTrash } from "react-icons/fa";
-import jwtDecode from "jwt-decode";
 import { useNavigate } from "react-router";
+import { useAuth } from "../context/AuthContext";
 
 const TodosList = () => {
   const [todos, setTodos] = useState([]);
   const [input, setInput] = useState("");
-  const [tab, setTab] = useState("");
-  const [token, setToken] = useState('');
-  const [expire,setExpire] = useState();
+  const [tab, setTab] = useState("all");
 
-  
+  const auth = useAuth()
 
   const navigate = useNavigate();
   
@@ -21,23 +19,17 @@ const TodosList = () => {
   const configJWT = () => {
     return {
       headers: {
-        "x-access-token": token
+        "x-access-token": auth.token
       }
     }
   }
   const axiosJWT = axios.create()
   axiosJWT.interceptors.request.use(async(config) => {
     let currentDate = new Date()
-    if(expire*1000<currentDate.getTime()){
-      console.log(currentDate)
-      console.log((expire * 1000) - currentDate.getTime())
-      const response = await axios.get(`${process.env.REACT_APP_API_URL}/auth/token`)
-      config.headers['x-access-token'] = response.data.accessToken
+    if(auth.expire*1000<currentDate.getTime()){
+      const newToken = await auth.getToken()
+      config.headers["x-access-token"] = newToken
       config.withCredentials = true
-      setToken(response.data.accessToken)
-      const decoded = jwtDecode(response.data.accessToken)
-      setExpire(decoded.exp)
-      console.log("token refreshed")
     }
     return config
   },(error) => {
@@ -66,16 +58,7 @@ const TodosList = () => {
   };
   
 
-  const refreshToken = async () => {
-    try {
-      const response = await axios.get(`${process.env.REACT_APP_API_URL}/auth/token`)
-      setToken(response.data.accessToken)
-      const decoded = jwtDecode(response.data.accessToken)
-      setExpire(decoded.exp)
-    } catch (error) {
-      console.log(error)
-    }
-  }
+  
   const getTodos = async () => {
     try {
       const response = await axiosJWT.get(`${process.env.REACT_APP_API_URL}/api`,configJWT());
@@ -144,30 +127,20 @@ const TodosList = () => {
   };
   const logoutHandler = async() =>{
     try {
-      await axiosJWT.delete(`${process.env.REACT_APP_API_URL}/auth/logout`,configJWT())
-      navigate('/')
+      await auth.logout()
+      navigate('/login')
     } catch (error) {
       console.log(error)
     }
 
   }
 
-  
-
-  useEffect(() => {
-    const refresh = async()=>{
-      await refreshToken()
-      setTab('all')
-    }
-    refresh()
-  }, []);
-
   useEffect(()=>{
     switchTab()
     //eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab]);
   return (
-    <div>
+    <div className="container">
       <h1 id="title" className="fs-1 fw-bold text-center mb-3">
         To Do List App
       </h1>
